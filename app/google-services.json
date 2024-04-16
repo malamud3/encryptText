@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1008546019198",
+    "project_id": "textimg-2b163",
+    "storage_bucket": "textimg-2b163.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1008546019198:android:87a10b0a4e8cf81b1aa52f",
+        "android_client_info": {
+          "package_name": "com.calssy.encrypttext"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkpzbjWj7q10bMM2_ZHs30fqU-QHezyO0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

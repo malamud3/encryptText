@@ -1,0 +1,13 @@
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_add_text"
+        android:title="Add Text"
+        android:actionLayout="@layout/menu_button"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_get_text"
+        android:title="Get Text"
+        android:actionLayout="@layout/menu_button"
+        app:showAsAction="ifRoom" />
+</menu>

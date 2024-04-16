@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">encryptText</string>
+    <string name="pixel_colors">Pixel Colors</string>
+    <string name="todo">TODO</string>
+    <string name="add_text">Add Text</string>
+    <string name="retrieve_text">Retrieve Text</string>
+</resources>
