@@ -14,6 +14,12 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 public class ImageProcessor {
+    // Listener interface to handle Bitmap retrieval results
+    public interface OnBitmapRetrievedListener {
+        void onBitmapRetrieved(Bitmap bitmap);
+        void onBitmapRetrievalFailed(Exception e);
+    }
+
     public Bitmap encode(Bitmap image, String message) {
         Bitmap mutableBitmap = image.copy(Bitmap.Config.ARGB_8888, true);
 
@@ -122,5 +128,22 @@ public class ImageProcessor {
     }
 
 
+    // Method to retrieve encrypted image data from Firebase Storage, decrypt it, and convert it to a Bitmap
+    public Bitmap retrieveBitmapFromFirebaseStorage() throws Exception {
+        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("images");
+        // Get the encrypted image data from Firebase Storage
+        DataSnapshot dataSnapshot = databaseReference.child("coin").get().getResult();
+
+        if (dataSnapshot.exists()) {
+            // Image data found, retrieve and decrypt it
+            String encryptedString = dataSnapshot.getValue(String.class);
+            String decryptedString = CryptoUtil.decrypt(encryptedString);
+            // Convert the decrypted string back to a Bitmap
+            return ImageUtil.convert(decryptedString);
+        } else {
+            // Handle case where image data doesn't exist
+            throw new Exception("Image data not found");
+        }
+    }
 
 }

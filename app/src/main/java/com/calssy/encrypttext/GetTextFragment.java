@@ -73,9 +73,6 @@ public class GetTextFragment extends Fragment {
     }
 
     private void loadBitmapFromExternalStorage(String filename) {
-//        Bitmap bitmap = imageProcessor.loadBitmapFromExternalStorage(filename);
-//        if (bitmap != null) {
-//            imageView.setImageBitmap(bitmap);
-//        }
+
     }
 }
