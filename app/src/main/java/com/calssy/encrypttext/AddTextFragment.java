@@ -41,7 +41,7 @@ public class AddTextFragment extends Fragment {
 
             Bitmap currentImage = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
 
-            Bitmap encodedImage = imageProcessor.encode(currentImage, text);
+            Bitmap encodedImage = ImageProcessor.encode(currentImage, text);
 
             // Save the encoded image to external storage
             try {
@@ -54,13 +54,13 @@ public class AddTextFragment extends Fragment {
             imageView.setImageBitmap(encodedImage);
 
             // Show a toast message
-            showToast("Text inserted into image and saved to external storage");
+            showToast();
         });
 
         return view;
     }
 
-    private void showToast(String message) {
-        Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
+    private void showToast() {
+        Toast.makeText(getActivity(), "Text inserted into image and saved to external storage", Toast.LENGTH_SHORT).show();
     }
 }

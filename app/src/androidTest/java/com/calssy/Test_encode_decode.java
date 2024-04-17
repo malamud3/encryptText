@@ -49,10 +49,12 @@ public class Test_encode_decode {
         String message = "Hello";
 
         // Call the encode function
-        Bitmap encodedImage = imageProcessor.encode(image, message);
+        Bitmap encodedImage = ImageProcessor.encode(image, message);
 
         // Call the decode function
-        String decodedMessage = imageProcessor.decode(encodedImage);
+        String decodedMessage = ImageProcessor.decode(encodedImage);
+        System.out.println("Decoded message size: " + decodedMessage.length());
+        System.out.println(decodedMessage);
 
         // Check that the returned message is equal to the original message
         assertEquals(message, decodedMessage);

@@ -5,7 +5,6 @@ import static com.calssy.encrypttext.CryptoUtil.encrypt;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -52,10 +51,10 @@ public class ImageProcessor {
 
         StringBuilder message = new StringBuilder();
 
-        for (int i = 0; i < pixels.length; i++) {
-            int red = Color.red(pixels[i]);
-            int green = Color.green(pixels[i]);
-            int blue = Color.blue(pixels[i]);
+        for (int pixel : pixels) {
+            int red = Color.red(pixel);
+            int green = Color.green(pixel);
+            int blue = Color.blue(pixel);
 
             char messageChar = 0;
 
@@ -69,9 +68,27 @@ public class ImageProcessor {
             message.append(messageChar);
         }
 
-        return message.toString();
+        return filterNonASCII(message.toString());
     }
 
+    public static String filterNonASCII(String input) {
+        StringBuilder asciiChars = new StringBuilder();
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if ((int) c <= 127) {
+                asciiChars.append(c);
+            }
+        }
+        return getSubstring(asciiChars.toString());
+    }
+    public static String getSubstring(String str) {
+        int index = str.indexOf('`');
+        if (index != -1) {
+            return str.substring(0, index);
+        } else {
+            return str;
+        }
+    }
 
     void saveBitmapToFirebaseStorage(Bitmap bitmap) throws Exception {
         String base64String = ImageUtil.convert(bitmap);

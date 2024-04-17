@@ -15,12 +15,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import java.util.Objects;
-
-
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.widget.Toast;
+
+import java.util.Arrays;
 
 public class GetTextFragment extends Fragment {
 
@@ -54,20 +51,16 @@ public class GetTextFragment extends Fragment {
         Bitmap currentImage = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
 
         new Thread(() -> {
-            final String decodedText = imageProcessor.decode(currentImage);
+            final String decodedText = ImageProcessor.decode(currentImage);
 
             requireActivity().runOnUiThread(() -> {
                 TextView textView = requireView().findViewById(R.id.textViewRetrievedText);
-                if (decodedText != null && !decodedText.isEmpty()) {
+                if (!decodedText.isEmpty()) {
                     // Display the retrieved text in the TextView
                     textView.setText("Retrieved Text: " + decodedText);
                 } else {
                     // Unable to retrieve text
-                    if(decodedText.isEmpty()){
-                        textView.setText("Empty");
-                    } else {
-                        textView.setText("Unable to retrieve text from the image.");
-                    }
+                    textView.setText("Empty");
                 }
             });
         }).start();
