@@ -42,7 +42,6 @@ public class AddTextFragment extends Fragment {
             // Get the current image from the ImageView
             Bitmap currentImage = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
 
-
             Bitmap encodedImage = imageProcessor.encode(currentImage, text);
 
             // Save the encoded image to external storage

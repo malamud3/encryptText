@@ -4,6 +4,8 @@ import static com.calssy.encrypttext.CryptoUtil.encrypt;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -14,13 +16,13 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 public class ImageProcessor {
-    // Listener interface to handle Bitmap retrieval results
-    public interface OnBitmapRetrievedListener {
-        void onBitmapRetrieved(Bitmap bitmap);
-        void onBitmapRetrievalFailed(Exception e);
-    }
+
 
     public Bitmap encode(Bitmap image, String message) {
+        if (message.length() > image.getWidth() * image.getHeight() / 3) {
+            throw new IllegalArgumentException("Message is too long to be encoded in the image");
+        }
+
         Bitmap mutableBitmap = image.copy(Bitmap.Config.ARGB_8888, true);
 
         int messageIndex = 0;
@@ -44,20 +46,24 @@ public class ImageProcessor {
 
             pixels[i] = Color.rgb(red, green, blue);
 
-            messageChar = message.charAt(++messageIndex);
+            if (++messageIndex < messageLength) {
+                messageChar = message.charAt(messageIndex);
 
-            red = (red & 0xFE) | ((messageChar >> 4) & 0x1);
-            green = (green & 0xFE) | ((messageChar >> 3) & 0x1);
-            blue = (blue & 0xFE) | ((messageChar >> 2) & 0x1);
+                red = (red & 0xFE) | ((messageChar >> 4) & 0x1);
+                green = (green & 0xFE) | ((messageChar >> 3) & 0x1);
+                blue = (blue & 0xFE) | ((messageChar >> 2) & 0x1);
 
-            pixels[++i] = Color.rgb(red, green, blue);
+                pixels[++i] = Color.rgb(red, green, blue);
+            }
 
-            messageChar = message.charAt(messageIndex++);
+            if (++messageIndex < messageLength) {
+                messageChar = message.charAt(messageIndex);
 
-            red = (red & 0xFE) | ((messageChar >> 1) & 0x1);
-            blue = (blue & 0xFE) | (messageChar & 0x1);
+                red = (red & 0xFE) | ((messageChar >> 1) & 0x1);
+                blue = (blue & 0xFE) | (messageChar & 0x1);
 
-            pixels[++i] = Color.rgb(red, green, blue);
+                pixels[++i] = Color.rgb(red, green, blue);
+            }
 
             messageIndex++;
         }
@@ -68,30 +74,38 @@ public class ImageProcessor {
     }
 
     public String decode(Bitmap image) {
+        StringBuilder message = new StringBuilder();
+
         int[] pixels = new int[image.getWidth() * image.getHeight()];
         image.getPixels(pixels, 0, image.getWidth(), 0, 0, image.getWidth(), image.getHeight());
 
-        StringBuilder message = new StringBuilder();
+        for (int i = 0; i < pixels.length; i++) {
+            int pixel = pixels[i];
 
-        for (int i = 0; i < pixels.length; i += 3) {
-            int pixel1 = pixels[i];
-            int pixel2 = pixels[i + 1];
-            int pixel3 = pixels[i + 2];
+            int red = Color.red(pixel);
+            int green = Color.green(pixel);
+            int blue = Color.blue(pixel);
 
-            int red1 = Color.red(pixel1);
-            int green1 = Color.green(pixel1);
-            int blue1 = Color.blue(pixel1);
+            char messageChar = (char) (((red & 0x1) << 7) | ((green & 0x1) << 6) | ((blue & 0x1) << 5));
 
-            int red2 = Color.red(pixel2);
-            int green2 = Color.green(pixel2);
-            int blue2 = Color.blue(pixel2);
+            if (++i < pixels.length) {
+                pixel = pixels[i];
 
-            int red3 = Color.red(pixel3);
-            int blue3 = Color.blue(pixel3);
+                red = Color.red(pixel);
+                green = Color.green(pixel);
+                blue = Color.blue(pixel);
 
-            char messageChar = (char) (((red1 & 0x1) << 7) | ((green1 & 0x1) << 6) | ((blue1 & 0x1) << 5)
-                    | ((red2 & 0x1) << 4) | ((green2 & 0x1) << 3) | ((blue2 & 0x1) << 2)
-                    | ((red3 & 0x1) << 1) | (blue3 & 0x1));
+                messageChar |= (char) (((red & 0x1) << 4) | ((green & 0x1) << 3) | ((blue & 0x1) << 2));
+            }
+
+            if (++i < pixels.length) {
+                pixel = pixels[i];
+
+                red = Color.red(pixel);
+                blue = Color.blue(pixel);
+
+                messageChar |= (char) (((red & 0x1) << 1) | (blue & 0x1));
+            }
 
             message.append(messageChar);
         }
@@ -122,28 +136,39 @@ public class ImageProcessor {
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-//                showToast("Failed to save image to Firebase Storage");
+               Log.d("FireBase", "Failed to save image to Firebase Storage");
             }
         });
     }
 
-
-    // Method to retrieve encrypted image data from Firebase Storage, decrypt it, and convert it to a Bitmap
-    public Bitmap retrieveBitmapFromFirebaseStorage() throws Exception {
-        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("images");
-        // Get the encrypted image data from Firebase Storage
-        DataSnapshot dataSnapshot = databaseReference.child("coin").get().getResult();
-
-        if (dataSnapshot.exists()) {
-            // Image data found, retrieve and decrypt it
-            String encryptedString = dataSnapshot.getValue(String.class);
-            String decryptedString = CryptoUtil.decrypt(encryptedString);
-            // Convert the decrypted string back to a Bitmap
-            return ImageUtil.convert(decryptedString);
-        } else {
-            // Handle case where image data doesn't exist
-            throw new Exception("Image data not found");
-        }
+    public interface BitmapCallback {
+        void onBitmapLoaded(Bitmap bitmap);
+        void onError(Exception e);
     }
 
+    public void retrieveBitmapFromFirebaseStorage(BitmapCallback callback) {
+        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("images");
+        databaseReference.child("coin").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    String encryptedString = dataSnapshot.getValue(String.class);
+                    try {
+                        String decryptedString = CryptoUtil.decrypt(encryptedString);
+                        Bitmap bitmap = ImageUtil.convert(decryptedString);
+                        callback.onBitmapLoaded(bitmap);
+                    } catch (Exception e) {
+                        callback.onError(e);
+                    }
+                } else {
+                    callback.onError(new Exception("Image data not found"));
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                callback.onError(databaseError.toException());
+            }
+        });
+    }
 }

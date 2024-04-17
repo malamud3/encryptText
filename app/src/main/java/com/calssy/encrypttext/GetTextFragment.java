@@ -3,6 +3,7 @@ package com.calssy.encrypttext;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,7 @@ import java.util.Objects;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.widget.Toast;
 
 public class GetTextFragment extends Fragment {
 
@@ -37,11 +39,11 @@ public class GetTextFragment extends Fragment {
         // Initialize ImageProcessor
         imageProcessor = new ImageProcessor();
 
-        // Load the image from external storage
-        loadBitmapFromExternalStorage("coin.png");
-
         // Set up button click listener
         btnRetrieveText.setOnClickListener(v -> retrieveTextFromImage());
+
+        // Retrieve bitmap from Firebase Storage
+        retrieveBitmapFromFirebaseStorage();
 
         return view;
     }
@@ -63,16 +65,38 @@ public class GetTextFragment extends Fragment {
                     // Unable to retrieve text
                     if(decodedText.isEmpty()){
                         textView.setText("Empty");
-
-                    }else {
+                    } else {
                         textView.setText("Unable to retrieve text from the image.");
                     }
                 }
             });
         }).start();
     }
+    // Listener interface to handle Bitmap retrieval results
 
-    private void loadBitmapFromExternalStorage(String filename) {
+// Method to retrieve bitmap from Firebase Storage
+private void retrieveBitmapFromFirebaseStorage() {
+    imageProcessor.retrieveBitmapFromFirebaseStorage(new ImageProcessor.BitmapCallback() {
+        @Override
+        public void onBitmapLoaded(Bitmap bitmap) {
+            if (bitmap != null) {
+                Log.e("FirebaseStorage", "Retrieved bitmap ");
+                // Set the retrieved bitmap to the ImageView
+                imageView.setImageBitmap(bitmap);
+            } else {
+                Log.e("FirebaseStorage", "Retrieved bitmap is null");
+                Toast.makeText(requireContext(), "Failed to retrieve image from Firebase Storage", Toast.LENGTH_SHORT).show();
+            }
+        }
 
-    }
+        @Override
+        public void onError(Exception e) {
+            // Log the error
+            Log.e("FirebaseStorage", "Failed to retrieve image from Firebase Storage", e);
+            // Show error message to the user
+            Toast.makeText(requireContext(), "Failed to retrieve image from Firebase Storage", Toast.LENGTH_SHORT).show();
+        }
+    });
+}
+
 }
