@@ -10,7 +10,7 @@ import com.calssy.encrypttext.ImageProcessor;
 
 
 @RunWith(AndroidJUnit4.class)
-public class Test_encode_decode {
+public class EncodeDecodeTest {
     private ImageProcessor imageProcessor = new ImageProcessor();
 
     @Test
@@ -36,7 +36,7 @@ public class Test_encode_decode {
     }
 
     @Test
-    public void testDecode() {
+    public void testDecode1() {
         // Create a Bitmap image
         Bitmap image = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888);
         for (int i = 0; i < image.getWidth(); i++) {
@@ -46,7 +46,55 @@ public class Test_encode_decode {
         }
 
         // Create a message string
-        String message = "Hello";
+        String message = "This is working";
+
+        // Call the encode function
+        Bitmap encodedImage = ImageProcessor.encode(image, message);
+
+        // Call the decode function
+        String decodedMessage = ImageProcessor.decode(encodedImage);
+        System.out.println("Decoded message size: " + decodedMessage.length());
+        System.out.println(decodedMessage);
+
+        // Check that the returned message is equal to the original message
+        assertEquals(message, decodedMessage);
+    }
+    @Test
+    public void testDecode2() {
+        // Create a Bitmap image
+        Bitmap image = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888);
+        for (int i = 0; i < image.getWidth(); i++) {
+            for (int j = 0; j < image.getHeight(); j++) {
+                image.setPixel(i, j, Color.rgb(i, j, i + j));
+            }
+        }
+
+        // Create a message string
+        String message = "Hello!";
+
+        // Call the encode function
+        Bitmap encodedImage = ImageProcessor.encode(image, message);
+
+        // Call the decode function
+        String decodedMessage = ImageProcessor.decode(encodedImage);
+        System.out.println("Decoded message size: " + decodedMessage.length());
+        System.out.println(decodedMessage);
+
+        // Check that the returned message is equal to the original message
+        assertEquals(message, decodedMessage);
+    }
+    @Test
+    public void testDecode3() {
+        // Create a Bitmap image
+        Bitmap image = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888);
+        for (int i = 0; i < image.getWidth(); i++) {
+            for (int j = 0; j < image.getHeight(); j++) {
+                image.setPixel(i, j, Color.rgb(i, j, i + j));
+            }
+        }
+
+        // Create a message string
+        String message = "Hello, world!";
 
         // Call the encode function
         Bitmap encodedImage = ImageProcessor.encode(image, message);

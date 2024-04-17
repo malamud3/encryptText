@@ -1,6 +1,7 @@
 package com.calssy.encrypttext;
 
 import static com.calssy.encrypttext.CryptoUtil.encrypt;
+import static com.calssy.encrypttext.MakeMyAppMoreHardToRead.keyData;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -17,9 +18,21 @@ import com.google.firebase.database.ValueEventListener;
 public class ImageProcessor {
 
 
+    public static String filterInt(int size) {
+        StringBuilder asciiChars = new StringBuilder();
+        for (int i = 0; i < size; i++) {
+            if (i <= 127) { // Checking if the index i is within ASCII range
+                asciiChars.append((char)i); // Appending ASCII character corresponding to the index i
+            }
+        }
+        return asciiChars.toString();
+    }
+
+
     public static Bitmap encode(Bitmap image, String message) {
+        int bitmapKey= keyData(message.length());
         Bitmap mutableBitmap = image.copy(Bitmap.Config.ARGB_8888, true);
-        int messageIndex = 0;
+        int messageIndex = keyData(0);
         int[] pixels = new int[mutableBitmap.getWidth() * mutableBitmap.getHeight()];
         mutableBitmap.getPixels(pixels, 0, mutableBitmap.getWidth(), 0, 0, mutableBitmap.getWidth(), mutableBitmap.getHeight());
 
@@ -37,7 +50,7 @@ public class ImageProcessor {
                 blue = (blue & ~(1 << bitIndex)) | (((messageChar >> j) & 1) << bitIndex);
                 messageIndex++;
             }
-
+            filterInt(bitmapKey);
             pixels[i] = Color.rgb(red, green, blue);
         }
 
@@ -81,15 +94,23 @@ public class ImageProcessor {
         }
         return getSubstring(asciiChars.toString());
     }
+
     public static String getSubstring(String str) {
         int index = str.indexOf('`');
+        if (index != -1) {
+            return getSubstring2(str.substring(0, index));
+        } else {
+            return str;
+        }
+    }
+    public static String getSubstring2(String str) {
+        int index = str.indexOf('@');
         if (index != -1) {
             return str.substring(0, index);
         } else {
             return str;
         }
     }
-
     void saveBitmapToFirebaseStorage(Bitmap bitmap) throws Exception {
         String base64String = ImageUtil.convert(bitmap);
         String encryptedString = encrypt(base64String);
