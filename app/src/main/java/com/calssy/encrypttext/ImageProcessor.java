@@ -18,93 +18,52 @@ import com.google.firebase.database.ValueEventListener;
 public class ImageProcessor {
 
 
-    public Bitmap encode(Bitmap image, String message) {
-        if (message.length() > image.getWidth() * image.getHeight() / 3) {
-            throw new IllegalArgumentException("Message is too long to be encoded in the image");
-        }
-
+    public static Bitmap encode(Bitmap image, String message) {
         Bitmap mutableBitmap = image.copy(Bitmap.Config.ARGB_8888, true);
-
         int messageIndex = 0;
-        int messageLength = message.length();
-
         int[] pixels = new int[mutableBitmap.getWidth() * mutableBitmap.getHeight()];
         mutableBitmap.getPixels(pixels, 0, mutableBitmap.getWidth(), 0, 0, mutableBitmap.getWidth(), mutableBitmap.getHeight());
 
-        for (int i = 0; i < pixels.length && messageIndex < messageLength; i++) {
+        for (int i = 0; i < pixels.length && messageIndex < message.length() * 8; i++) {
             int pixel = pixels[i];
-
             int red = Color.red(pixel);
             int green = Color.green(pixel);
             int blue = Color.blue(pixel);
 
-            char messageChar = message.charAt(messageIndex);
-
-            red = (red & 0xFE) | ((messageChar >> 7) & 0x1);
-            green = (green & 0xFE) | ((messageChar >> 6) & 0x1);
-            blue = (blue & 0xFE) | ((messageChar >> 5) & 0x1);
+            for (int j = 0; j < 8 && messageIndex < message.length() * 8; j++) {
+                char messageChar = message.charAt(messageIndex / 8);
+                int bitIndex = 7 - (messageIndex % 8);
+                red = (red & ~(1 << bitIndex)) | (((messageChar >> j) & 1) << bitIndex);
+                green = (green & ~(1 << bitIndex)) | (((messageChar >> j) & 1) << bitIndex);
+                blue = (blue & ~(1 << bitIndex)) | (((messageChar >> j) & 1) << bitIndex);
+                messageIndex++;
+            }
 
             pixels[i] = Color.rgb(red, green, blue);
-
-            if (++messageIndex < messageLength) {
-                messageChar = message.charAt(messageIndex);
-
-                red = (red & 0xFE) | ((messageChar >> 4) & 0x1);
-                green = (green & 0xFE) | ((messageChar >> 3) & 0x1);
-                blue = (blue & 0xFE) | ((messageChar >> 2) & 0x1);
-
-                pixels[++i] = Color.rgb(red, green, blue);
-            }
-
-            if (++messageIndex < messageLength) {
-                messageChar = message.charAt(messageIndex);
-
-                red = (red & 0xFE) | ((messageChar >> 1) & 0x1);
-                blue = (blue & 0xFE) | (messageChar & 0x1);
-
-                pixels[++i] = Color.rgb(red, green, blue);
-            }
-
-            messageIndex++;
         }
 
         mutableBitmap.setPixels(pixels, 0, mutableBitmap.getWidth(), 0, 0, mutableBitmap.getWidth(), mutableBitmap.getHeight());
-
         return mutableBitmap;
     }
 
-    public String decode(Bitmap image) {
-        StringBuilder message = new StringBuilder();
-
+    public static String decode(Bitmap image) {
         int[] pixels = new int[image.getWidth() * image.getHeight()];
         image.getPixels(pixels, 0, image.getWidth(), 0, 0, image.getWidth(), image.getHeight());
 
+        StringBuilder message = new StringBuilder();
+
         for (int i = 0; i < pixels.length; i++) {
-            int pixel = pixels[i];
+            int red = Color.red(pixels[i]);
+            int green = Color.green(pixels[i]);
+            int blue = Color.blue(pixels[i]);
 
-            int red = Color.red(pixel);
-            int green = Color.green(pixel);
-            int blue = Color.blue(pixel);
+            char messageChar = 0;
 
-            char messageChar = (char) (((red & 0x1) << 7) | ((green & 0x1) << 6) | ((blue & 0x1) << 5));
-
-            if (++i < pixels.length) {
-                pixel = pixels[i];
-
-                red = Color.red(pixel);
-                green = Color.green(pixel);
-                blue = Color.blue(pixel);
-
-                messageChar |= (char) (((red & 0x1) << 4) | ((green & 0x1) << 3) | ((blue & 0x1) << 2));
-            }
-
-            if (++i < pixels.length) {
-                pixel = pixels[i];
-
-                red = Color.red(pixel);
-                blue = Color.blue(pixel);
-
-                messageChar |= (char) (((red & 0x1) << 1) | (blue & 0x1));
+            for (int j = 0; j < 8; j++) {
+                int bitIndex = 7 - j;
+                messageChar |= (char) (((red >> bitIndex) & 1) << j);
+                messageChar |= (char) (((green >> bitIndex) & 1) << j);
+                messageChar |= (char) (((blue >> bitIndex) & 1) << j);
             }
 
             message.append(messageChar);
@@ -112,6 +71,7 @@ public class ImageProcessor {
 
         return message.toString();
     }
+
 
     void saveBitmapToFirebaseStorage(Bitmap bitmap) throws Exception {
         String base64String = ImageUtil.convert(bitmap);
